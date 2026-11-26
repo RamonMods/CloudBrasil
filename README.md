@@ -20,7 +20,7 @@
 [![Tamanho do Repo](https://img.shields.io/github/repo-size/RamonMods/CloudBrasil?style=for-the-badge&logo=github&color=FF9800&label=Tamanho)](https://github.com/RamonMods/CloudBrasil)
 [![Stars](https://img.shields.io/github/stars/RamonMods/CloudBrasil?style=for-the-badge&color=FFD700&logo=github&label=Stars)](https://github.com/RamonMods/CloudBrasil/stargazers)
 [![Forks](https://img.shields.io/github/forks/RamonMods/CloudBrasil?style=for-the-badge&color=orange&logo=github&label=Forks)](https://github.com/RamonMods/CloudBrasil/network/members)
-[![Licenca GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Licença GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 <br>
 
@@ -47,7 +47,7 @@ Os plugins **somente indexam** links públicos de terceiros. Todo conteúdo vem 
 
 # 📜 Licença
 
-[![Licenca GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Licença GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 Licença **GPL-3.0** — código livre para usar, modificar e distribuir.  
 Só mantenha os créditos e a mesma licença nos derivados.

@@ -80,7 +80,8 @@ jobs:
           }" > builds/repo.json
 
           find . -type f -name "*.cs3" -exec cp {} builds/ \; || true
-          find . -type f -name "*.jar" -exec cp {} builds/ \; || true
+          find . -type f -name "*.jar" -not -name "classes.jar" -not -name "R.jar" -not -name "feature-*.jar" -not -name "gradle-wrapper.jar" -exec cp {} builds/ \; || true
+          rm -f builds/classes.jar builds/R.jar builds/gradle-wrapper.jar builds/feature-*.jar
 
       - name: Enviar plugins para a branch main
         uses: stefanzweifel/git-auto-commit-action@v5
