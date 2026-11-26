@@ -43,7 +43,7 @@ Mapa do ecossistema, arquitetura e documentação em PT-BR: [RamonMods/CloudStre
 
 [![App CloudStream](https://img.shields.io/badge/App_CloudStream-Nosso_Repositório-9C27B0?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudStream)
 
-Baixe o APK oficial em https://github.com/recloudstream/cloudstream/releases.
+Como instalar e compilar o APK: https://github.com/RamonMods/CloudStream#instalação
 
 ---
 
@@ -70,8 +70,8 @@ Projeto open source mantido por **RamonMods**.
 
 Repositórios de referência:  
 - [![CloudBrasil](https://img.shields.io/badge/CloudBrasil-Repositório-FF6B6B?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudBrasil)  
-- [![CloudStream Official](https://img.shields.io/badge/CloudStream_Oficial-GitHub-7289DA?style=for-the-badge&logo=github)](https://github.com/recloudstream/cloudstream) 
-- [![Documentação CloudStream](https://img.shields.io/badge/📚_Documentação-4CAF50?style=for-the-badge&logo=readthedocs)](https://recloudstream.github.io/csdocs/)
+- [![App CloudStream](https://img.shields.io/badge/App_CloudStream-Nosso_Repositorio-7289DA?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudStream) 
+- [![Documentação CloudBrasil](https://img.shields.io/badge/📚_Documentação-4CAF50?style=for-the-badge&logo=readthedocs)](https://github.com/RamonMods/CloudStream/blob/master/ARQUITETURA.md)
 
 <br>
 
