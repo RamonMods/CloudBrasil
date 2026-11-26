@@ -4,7 +4,8 @@ Atualizado em 26/11/2026. **CI verde** — 18 plugins publicados em `builds/`.
 
 ## Instalação
 
-- Shortcode no CloudStream: `CloudBrasil`
+- O app do RamonMods já vem com este repositório configurado como padrão.
+- Em outro app: **Extensões → Adicionar repositório** e cole a URL abaixo.
 - URL: `https://raw.githubusercontent.com/RamonMods/CloudBrasil/main/builds/repo.json`
 - Repo do app/ecossistema (PT-BR): https://github.com/RamonMods/CloudStream
 
