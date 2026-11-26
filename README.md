@@ -26,9 +26,9 @@
 
 ### Instalação
 
-**Escreva o shortcode "CloudBrasil" no Cloudstream**
+**O app CloudStream do RamonMods já vem com este repositório configurado como padrão.**
 
-**ou Copie esta URL e cole no CloudStream:**
+Se estiver usando outro app, abra **Extensões → Adicionar repositório** e cole esta URL:
 
 [![Copiar URL do Repositório](https://img.shields.io/badge/📋_COPIAR_URL-000000?style=for-the-badge&logo=github&logoColor=white)](https://raw.githubusercontent.com/RamonMods/CloudBrasil/main/builds/repo.json)
 

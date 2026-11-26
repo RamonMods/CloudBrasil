@@ -1,4 +1,4 @@
-rootProject.name = "CloudstreamPlugins"
+rootProject.name = "CloudBrasil"
 
 val disabled = setOf<String>()
 
