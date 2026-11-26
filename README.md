@@ -37,7 +37,7 @@
 
 ---
 
-# ⚠️ Disclaimer Legal
+# ⚠️ Aviso Legal
 
 Este projeto **não promove, hospeda, transmite, armazena ou distribui** qualquer mídia protegida por direitos autorais (filmes, séries, animes etc.).
 
