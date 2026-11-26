@@ -1,7 +1,7 @@
 <div align="center">
 
 # CloudBrasil
-## 🇧🇷 Extensão brasileira para CloudStream
+## Extensão brasileira para CloudStream
 
 **Open source (GPL-3.0), sem cadastro e sem enrolação.** Deixe uma ⭐ se o repo te ajudou.
 
