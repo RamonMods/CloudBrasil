@@ -1,0 +1,7 @@
+{
+  "name": "CloudBrasil",
+  "iconUrl": "https://github.com/RamonMods.png",
+  "description": "Repositório Brasileiro para o Cloudstream",
+  "manifestVersion": 1,
+  "pluginLists": ["https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/plugins.json"]
+}
