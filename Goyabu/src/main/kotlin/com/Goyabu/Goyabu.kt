@@ -13,7 +13,7 @@ class Goyabu : MainAPI() {
     override var lang = "pt-br"
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(TvType.Anime)
-    override val usesWebView = false
+    override val usesWebView = true
 
     companion object {
         private const val SEARCH_PATH = "/?s="
@@ -62,6 +62,31 @@ class Goyabu : MainAPI() {
         }
         clean = clean.replace(Regex("\\s+"), " ").trim()
         return if (clean.isBlank()) dirtyTitle else clean
+    }
+
+    // Cada temporada e uma entrada separada do catalogo ("Shingeki No Kyojin 2 Dublado").
+    // Deriva o numero da temporada do titulo; sem marcador, assume temporada 1.
+    private fun extrairTemporada(titulo: String): Int {
+        return try {
+            val padroes = listOf(
+                "(?i)temporada\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)\\s*(?:ª|º|°)?\\s*temporada".toRegex(),
+                "(?i)season\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)(?:st|nd|rd|th)\\s+season".toRegex()
+            )
+            for (padrao in padroes) {
+                padrao.find(titulo)?.groupValues?.get(1)?.toIntOrNull()?.let { return it }
+            }
+            // Numero solto antes de "Dublado"/"Legendado"; limita a 1..20 para
+            // nao confundir titulos como "86 Dublado" com temporada 86
+            "(?i)(?<!\\d)(\\d{1,2})\\s*(?:dublado|legendado)\\b".toRegex()
+                .find(titulo)?.groupValues?.get(1)?.toIntOrNull()
+                ?.takeIf { it in 1..20 }
+                ?.let { return it }
+            if (titulo.contains("final season", ignoreCase = true)) 4 else 1
+        } catch (e: Exception) {
+            1
+        }
     }
 
     private fun cleanSynopsis(dirtySynopsis: String): String {
@@ -302,15 +327,21 @@ class Goyabu : MainAPI() {
             val isDubbed = rawTitle.contains("dublado", ignoreCase = true) ||
                           document.selectFirst(".audio-box.dublado, .dublado") != null
 
-            val episodes = extractEpisodesFromJavaScript(document, url)
+            // Temporada derivada do titulo da entrada do catalogo
+            val seasonNumber = extrairTemporada(rawTitle)
+
+            val episodes = extractEpisodesFromJavaScript(document, url, seasonNumber)
             val fallbackEpisodes = if (episodes.isEmpty()) {
-                extractEpisodesFallback(document, url)
+                extractEpisodesFallback(document, url, seasonNumber)
             } else {
                 emptyList()
             }
             
             val allEpisodes = episodes + fallbackEpisodes
-            val sortedEpisodes = allEpisodes.sortedBy { it.episode }
+            // Deduplica por (temporada, episodio) e ordena na mesma chave
+            val sortedEpisodes = allEpisodes
+                .distinctBy { (it.season ?: 1) to (it.episode ?: 0) }
+                .sortedWith(compareBy({ it.season ?: 1 }, { it.episode ?: 0 }))
 
             newAnimeLoadResponse(title, url, TvType.Anime) {
                 this.posterUrl = poster
@@ -333,7 +364,7 @@ class Goyabu : MainAPI() {
         }
     }
 
-    private fun extractEpisodesFromJavaScript(document: org.jsoup.nodes.Document, baseUrl: String): List<Episode> {
+    private fun extractEpisodesFromJavaScript(document: org.jsoup.nodes.Document, baseUrl: String, seasonNumber: Int): List<Episode> {
         val episodes = mutableListOf<Episode>()
 
         try {
@@ -359,7 +390,7 @@ class Goyabu : MainAPI() {
                                 episodes.add(newEpisode(epUrl) {
                                     this.name = epTitle
                                     this.episode = epNumber
-                                    this.season = 1
+                                    this.season = seasonNumber
                                 })
 
                             } catch (e: Exception) {
@@ -381,7 +412,7 @@ class Goyabu : MainAPI() {
         return episodes
     }
 
-    private fun extractEpisodesFallback(document: org.jsoup.nodes.Document, baseUrl: String): List<Episode> {
+    private fun extractEpisodesFallback(document: org.jsoup.nodes.Document, baseUrl: String, seasonNumber: Int): List<Episode> {
         val episodes = mutableListOf<Episode>()
 
         val episodeLinks = document.select("a[href]").filter { 
@@ -399,7 +430,7 @@ class Goyabu : MainAPI() {
                 episodes.add(newEpisode(fixUrl(href)) {
                     this.name = "Episódio $episodeNum"
                     this.episode = episodeNum
-                    this.season = 1
+                    this.season = seasonNumber
                 })
 
             } catch (e: Exception) {

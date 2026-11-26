@@ -1,7 +1,7 @@
 <div align="center">
 
 # CloudBrasil
-### 🇧🇷 Filmes, séries, animes, doramas e canais ao vivo em português — direto no CloudStream
+## 🇧🇷 Extensão brasileira para CloudStream
 
 **Open source (GPL-3.0), sem cadastro e sem enrolação.** Deixe uma ⭐ se o repo te ajudou.
 

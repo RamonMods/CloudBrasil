@@ -95,6 +95,59 @@ class DattebayoBR : MainAPI() {
         } ?: (null to null)
     }
 
+    // Extrai o numero da temporada a partir do titulo da ficha.
+    // Ex.: "Season 2", "Season 3 Part 2", "Temporada 2", "2nd Season".
+    private fun extrairTemporada(titulo: String): Int {
+        return try {
+            val padroes = listOf(
+                "(?i)temporada\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)\\s*(?:ª|º|°)?\\s*temporada".toRegex(),
+                "(?i)season\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)(?:st|nd|rd|th)\\s+season".toRegex()
+            )
+            for (padrao in padroes) {
+                padrao.find(titulo)?.groupValues?.get(1)?.toIntOrNull()?.let { return it }
+            }
+            if (titulo.contains("final season", ignoreCase = true)) 4 else 1
+        } catch (e: Exception) {
+            1
+        }
+    }
+
+    // Extrai o numero da parte ("Season 3 Part 2" => 2). Ausente = parte 1.
+    private fun extrairParte(titulo: String): Int {
+        return try {
+            "(?i)\\bpart(?:e)?\\s*(\\d+)".toRegex()
+                .find(titulo)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+        } catch (e: Exception) {
+            1
+        }
+    }
+
+    // Le o total de episodios ("Episodios N/M") da ficha da temporada anterior,
+    // usada para deslocar a numeracao das partes (ex.: "Season 3 Part 2").
+    private suspend fun totalEpisodiosTemporadaAnterior(document: Document): Int? {
+        return try {
+            val anteriorUrl = document.selectFirst("a.tempAnterior")?.attr("href")
+                ?.takeIf { it.isNotBlank() }
+                ?.let { fixUrl(it) }
+                ?: return null
+
+            val anteriorDoc = app.get(anteriorUrl, referer = mainUrl).document
+            var total: Int? = null
+            anteriorDoc.select(DETAIL_EPISODES_INFO).forEach { element ->
+                val text = element.text()
+                if (text.contains("Episódios", ignoreCase = true)) {
+                    val (_, t) = extractTotalEpisodes(text)
+                    if (t != null) total = t
+                }
+            }
+            total
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private fun findAllVideoUrls(document: Document): List<Pair<String, String>> {
         val videoUrls = mutableListOf<Pair<String, String>>()
         
@@ -277,6 +330,21 @@ class DattebayoBR : MainAPI() {
 
         val document = app.get(actualUrl).document
         val title = document.selectFirst(DETAIL_TITLE)?.text()?.trim() ?: "Sem título"
+
+        // Temporada/parte ficam no h1 ("Season 3 Part 2"); o <title> e o fallback
+        val tituloTemporada = document.selectFirst(DETAIL_TITLE)?.text()?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: document.title().trim()
+        val seasonNumber = extrairTemporada(tituloTemporada)
+        val parteNumber = extrairParte(tituloTemporada)
+
+        // Partes ("Season 3 Part 2") colidem com a temporada base: desloca os
+        // episodios pelo total da ficha irma; sem ela, usa 50 por parte
+        val offsetEpisodios = if (parteNumber > 1) {
+            totalEpisodiosTemporadaAnterior(document) ?: ((parteNumber - 1) * 50)
+        } else {
+            0
+        }
         val isDub = isDub(title, actualUrl)
         val isDorama = actualUrl.contains("/doramas/")
         val poster = thumbPoster ?: document.selectFirst(DETAIL_POSTER)?.attr("src")?.let { fixUrl(it) }
@@ -319,8 +387,8 @@ class DattebayoBR : MainAPI() {
                 val episodeTitle = link.attr(EPISODE_TITLE_ATTR).takeIf { it.isNotBlank() } 
                     ?: element.selectFirst(HOME_TITLE)?.text()?.trim() ?: return@forEach
                 
-                // Extrai o número real do episódio do título
-                val episodeNumber = extractEpisodeNumber(episodeTitle)
+                // Extrai o numero real do episodio do titulo e aplica o deslocamento da parte
+                val episodeNumber = extractEpisodeNumber(episodeTitle)?.plus(offsetEpisodios)
                 val episodePoster = element.selectFirst("img")?.attr("src")?.let { fixUrl(it) }
 
                 pageEps.add(
@@ -329,6 +397,7 @@ class DattebayoBR : MainAPI() {
                                else if (episodeNumber != null) "Episódio $episodeNumber" 
                                else episodeTitle
                         episode = episodeNumber
+                        season = seasonNumber
                         posterUrl = episodePoster ?: poster
                     }
                 )
@@ -363,10 +432,11 @@ class DattebayoBR : MainAPI() {
             episodes.addAll(additionalEpisodes)
         }
 
-        // 4. Ordena tudo pelo número do episódio, garantindo a ordem cronológica
-        // Isso é fundamental porque requisições assíncronas podem retornar fora de ordem
-        episodes.sortBy { it.episode }
-        // --- FIM DA CORREÇÃO ---
+        // 4. Deduplica por URL (a paginacao concatena sem dedupe) e ordena por temporada/episodio
+        val uniqueEpisodes = episodes.distinctBy { it.url }
+        val sortedEpisodes = uniqueEpisodes.sortedWith(
+            compareBy({ it.season ?: 1 }, { it.episode ?: 0 })
+        )
 
         return newAnimeLoadResponse(cleanTitle(title), actualUrl, tvType) {
             this.posterUrl = poster
@@ -375,9 +445,9 @@ class DattebayoBR : MainAPI() {
             this.tags = genres
             this.showStatus = showStatus
             if (isDub) {
-                addEpisodes(DubStatus.Dubbed, episodes)
+                addEpisodes(DubStatus.Dubbed, sortedEpisodes)
             } else {
-                addEpisodes(DubStatus.Subbed, episodes)
+                addEpisodes(DubStatus.Subbed, sortedEpisodes)
             }
         }
     }

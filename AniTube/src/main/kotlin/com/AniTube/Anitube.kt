@@ -6,7 +6,7 @@ import org.jsoup.nodes.Element
 import java.net.URLDecoder
 
 class AniTube : MainAPI() {
-    override var mainUrl = "https://www.anitube.news"
+    override var mainUrl = "https://www.anitube.zip"
     override var name = "AniTube"
     override val hasMainPage = true
     override var lang = "pt-br"
@@ -27,6 +27,7 @@ class AniTube : MainAPI() {
         private const val LATEST_EPISODES_SECTION = ".epiContainer"
 
         private const val ANIME_TITLE = "h1"
+        private const val ANIME_TITLE_FALLBACK = ".fav[data-title]"
         private const val ANIME_POSTER = "#capaAnime img"
         private const val ANIME_SYNOPSIS = "#sinopse2"
         private const val ANIME_METADATA = ".boxAnimeSobre .boxAnimeSobreLinha"
@@ -84,6 +85,25 @@ class AniTube : MainAPI() {
             "\\b(\\d{3,})\\b".toRegex(),
             "\\b(\\d{1,2})\\b".toRegex()
         ).firstNotNullOfOrNull { it.find(title)?.groupValues?.get(1)?.toIntOrNull() }
+    }
+
+    // Extrai o numero da temporada a partir do titulo da ficha.
+    // No AniTube cada temporada e uma ficha separada (ex.: "Anime 4 Temporada", "Anime Season 2").
+    private fun extrairTemporada(titulo: String): Int {
+        return try {
+            val padroes = listOf(
+                "(?i)temporada\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)\\s*(?:ª|º|°)?\\s*temporada".toRegex(),
+                "(?i)season\\s*(\\d+)".toRegex(),
+                "(?i)(\\d+)(?:st|nd|rd|th)\\s+season".toRegex()
+            )
+            for (padrao in padroes) {
+                padrao.find(titulo)?.groupValues?.get(1)?.toIntOrNull()?.let { return it }
+            }
+            if (titulo.contains("final season", ignoreCase = true)) 4 else 1
+        } catch (e: Exception) {
+            1
+        }
     }
 
     private fun extractAnimeTitleFromEpisode(episodeTitle: String): String {
@@ -288,9 +308,14 @@ class AniTube : MainAPI() {
 
         val document = app.get(actualUrl).document
 
-        val rawTitle = document.selectFirst(ANIME_TITLE)?.text()?.trim() ?: "Sem Título"
+        // h1 e o principal; .fav[data-title] serve de fallback em fichas antigas
+        val rawTitle = document.selectFirst(ANIME_TITLE)?.text()?.trim()
+            ?: document.selectFirst(ANIME_TITLE_FALLBACK)?.attr("data-title")?.trim()
+            ?: "Sem Título"
         val episodeNumber = extractEpisodeNumber(rawTitle) ?: 1
         val title = cleanTitle(rawTitle)
+        // Cada temporada do AniTube e uma ficha separada: o numero vem do titulo
+        val seasonNumber = extrairTemporada(rawTitle)
 
         val poster = thumbPoster ?: document.selectFirst(ANIME_POSTER)?.attr("src")?.let { fixUrl(it) }
 
@@ -322,14 +347,20 @@ class AniTube : MainAPI() {
         val isDubbed = rawTitle.contains("dublado", true) || audioType.contains("dublado", true)
 
         val episodesList = document.select(EPISODE_LIST).mapNotNull { element ->
-            val episodeTitle = element.text().trim()
-            val episodeUrl = element.attr("href")
-            val epNumber = extractEpisodeNumber(episodeTitle) ?: 1
+            try {
+                val episodeTitle = element.text().trim()
+                val episodeUrl = element.attr("href").trim()
+                if (episodeUrl.isBlank()) return@mapNotNull null
+                val epNumber = extractEpisodeNumber(episodeTitle) ?: 1
 
-            newEpisode(episodeUrl) {
-                this.name = "Episódio $epNumber"
-                this.episode = epNumber
-                this.posterUrl = poster
+                newEpisode(episodeUrl) {
+                    this.name = "Episódio $epNumber"
+                    this.episode = epNumber
+                    this.season = seasonNumber
+                    this.posterUrl = poster
+                }
+            } catch (e: Exception) {
+                null
             }
         }
 
@@ -337,13 +368,18 @@ class AniTube : MainAPI() {
             listOf(newEpisode(actualUrl) {
                 this.name = "Episódio $episodeNumber"
                 this.episode = episodeNumber
+                this.season = seasonNumber
                 this.posterUrl = poster
             })
         } else {
             episodesList
         }
 
-        val sortedEpisodes = allEpisodes.sortedBy { it.episode }
+        // Remove duplicados por URL e ordena por temporada/episodio
+        val uniqueEpisodes = allEpisodes.distinctBy { it.url }
+        val sortedEpisodes = uniqueEpisodes.sortedWith(
+            compareBy({ it.season ?: 1 }, { it.episode ?: 0 })
+        )
         val showStatus = if (episodes != null && sortedEpisodes.size >= episodes) ShowStatus.Completed else ShowStatus.Ongoing
 
         return newAnimeLoadResponse(title, actualUrl, TvType.Anime) {
