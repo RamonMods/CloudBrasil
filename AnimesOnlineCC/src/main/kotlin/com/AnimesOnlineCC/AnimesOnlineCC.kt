@@ -59,7 +59,7 @@ class AnimesOnlineCC : MainAPI() {
 
         /** Remove o sufixo de SEO que o site coloca nos títulos. */
         private fun cleanTitle(raw: String?): String {
-            val text = raw?.replace(Regex("""\s+"""), " ").trim().orEmpty()
+            val text = raw?.replace(Regex("""\s+"""), " ")?.trim().orEmpty()
             val cleaned = text
                 .replace(Regex("""\s*Todos os Epis[oó]dios Online""", RegexOption.IGNORE_CASE), "")
                 .replace(Regex("""\s*Online$""", RegexOption.IGNORE_CASE), "")
