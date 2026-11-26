@@ -1,9 +1,9 @@
 <div align="center">
 
 # CloudBrasil
-## 🇧🇷 Extensão brasileira para CloudStream
+### 🇧🇷 Filmes, séries, animes, doramas e canais ao vivo em português — direto no CloudStream
 
-**Deixe uma ⭐ se esse repo te ajudou**  
+**Open source (GPL-3.0), sem cadastro e sem enrolação.** Deixe uma ⭐ se o repo te ajudou.
 
 [![Deixe uma Star](https://img.shields.io/badge/⭐_Deixe_uma_Star-FFD700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/RamonMods/CloudBrasil/stargazers)
 <br>
