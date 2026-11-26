@@ -562,7 +562,7 @@ class Xtream : MainAPI() {
                             val extension = episode.ext?.ifBlank { null } ?: "mp4"
                             val epLink = "${mainUrl.trimEnd('/')}/series/$configuredUser/$configuredPass/$episodeId.$extension"
                             episodes.add(
-                                newEpisode(epLink, fix = false) {
+                                newEpisode(epLink) {
                                     name = episodeTitle ?: "Episódio ${episodeNumber ?: ""}".trim()
                                     season = seasonNumber
                                     this.episode = episodeNumber
