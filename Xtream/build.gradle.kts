@@ -31,7 +31,6 @@ android {
 }
 
 cloudstream {
-    internalName = "Xtream"
     description = "Provedor Xtream IPTV: canais ao vivo, filmes e séries via API/M3U"
     language = "pt-br"
     authors = listOf("RamonMods")
