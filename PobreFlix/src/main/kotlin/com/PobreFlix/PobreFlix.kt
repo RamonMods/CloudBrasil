@@ -260,13 +260,12 @@ class PobreFlix : MainAPI() {
         val dateText = selectFirst(".vbEpisodeCard__date")?.text().orEmpty()
             .substringAfter("Lançamento:").trim()
 
-        return Episode().apply {
+        return newEpisode(episodeUrl) {
             this.name = name
             this.season = season
             this.episode = number
             this.posterUrl = poster
             this.description = description
-            this.data = episodeUrl
             if (dateText.isNotBlank()) parseDate(dateText)?.let { this.addDate(it) }
         }
     }
