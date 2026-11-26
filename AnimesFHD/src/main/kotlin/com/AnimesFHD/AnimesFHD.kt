@@ -33,7 +33,7 @@ import java.util.TimeZone
 /**
  * AnimesFHD (https://animesfhd.net) pela API JSON pública do site.
  * Cada temporada e cada áudio (dublado/legendado) é uma ficha no site; ao abrir uma,
- * os episódios do outro áudio da mesma temporada entram como Dub/Sub da mesma página.
+ * todas as fichas de versions[] são agregadas e separadas entre Dub/Sub.
  */
 class AnimesFHD : MainAPI() {
     override var mainUrl = "https://animesfhd.net"
@@ -74,17 +74,11 @@ class AnimesFHD : MainAPI() {
         val id = SERIES_ID.find(url)?.groupValues?.get(1) ?: return null
         val first = getJson<SeriesDetail>("/api/series/$id?page=1&per_page=$EPISODES_PAGE_SIZE") ?: return null
         val series = first.series ?: return null
-        val audio = first.seo?.audio ?: series.category
-        val isDub = audio == "dublado"
         val isMovie = series.category == "filme" || first.seo?.format == "movie"
-        val season = first.seo?.season
 
-        val ownEpisodes = toEpisodes(readAllEpisodes(id, first), season)
-        val otherAudio = otherAudioVersion(id, first)
-        val otherEpisodes = otherAudio?.let { other ->
-            val otherFirst = getJson<SeriesDetail>("/api/series/$other?page=1&per_page=$EPISODES_PAGE_SIZE")
-            otherFirst?.let { toEpisodes(readAllEpisodes(other.toString(), it), season) }
-        }
+        // Cada entrada de versions[] é uma ficha de temporada/áudio; agregamos todas
+        // para devolver a série completa, e não só a página aberta.
+        val byStatus = collectVersionsEpisodes(id, first)
 
         val title = first.seo?.heading?.takeIf { it.isNotBlank() } ?: series.title ?: return null
         return newAnimeLoadResponse(title, url, if (isMovie) TvType.AnimeMovie else TvType.Anime) {
@@ -98,8 +92,8 @@ class AnimesFHD : MainAPI() {
                 "ongoing", "airing", "em lançamento", "lancando" -> ShowStatus.Ongoing
                 else -> null
             }
-            addEpisodes(if (isDub) DubStatus.Dubbed else DubStatus.Subbed, ownEpisodes)
-            addEpisodes(if (isDub) DubStatus.Subbed else DubStatus.Dubbed, otherEpisodes)
+            addEpisodes(DubStatus.Dubbed, byStatus[DubStatus.Dubbed].orEmpty())
+            addEpisodes(DubStatus.Subbed, byStatus[DubStatus.Subbed].orEmpty())
             addMalId(first.mal?.id)
         }
     }
@@ -162,18 +156,53 @@ class AnimesFHD : MainAPI() {
         return seen.values.toList()
     }
 
-    /** Ficha do mesmo título/temporada no outro áudio, se o site tiver. */
-    private fun otherAudioVersion(id: String, detail: SeriesDetail): Long? {
-        val versions = detail.versions.orEmpty()
-        val current = versions.firstOrNull { it.seriesId?.toString() == id } ?: return null
-        return versions.firstOrNull {
-            it.seriesId != null && it.seriesId.toString() != id &&
-                it.season == current.season && (it.part ?: 0) == (current.part ?: 0) &&
-                !it.audio.isNullOrBlank() && it.audio != current.audio
-        }?.seriesId
+    /**
+     * Agrega todas as versões da API (uma ficha por temporada/áudio). O `episode` ganha
+     * um offset acumulado por temporada para a numeração ficar contínua entre elas;
+     * duplicatas são descartadas por `data` e a saída sai ordenada por (season, episode).
+     */
+    private suspend fun collectVersionsEpisodes(
+        id: String,
+        first: SeriesDetail,
+    ): Map<DubStatus, List<Episode>> {
+        // Sem versões na resposta, cai para a própria ficha (comportamento antigo).
+        val versions = first.versions.orEmpty().filter { it.seriesId != null }.ifEmpty {
+            listOf(Version(seriesId = id.toLongOrNull(), season = first.seo?.season, audio = first.seo?.audio))
+        }
+        val dubbed = LinkedHashMap<String, Episode>()
+        val subbed = LinkedHashMap<String, Episode>()
+        var offset = 0
+
+        // groupBy deixa as temporadas em ordem e permite calcular o offset antes de numerar.
+        for ((season, group) in versions.groupBy { it.season ?: 0 }.toSortedMap()) {
+            val fetched = group.mapNotNull { version ->
+                val sid = version.seriesId?.toString() ?: return@mapNotNull null
+                // A ficha atual já veio no primeiro JSON; as demais vêm da API.
+                val detail = if (sid == id) first
+                    else getJson<SeriesDetail>("/api/series/$sid?page=1&per_page=$EPISODES_PAGE_SIZE")
+                        ?: return@mapNotNull null
+                val status = if (version.audio == "dublado") DubStatus.Dubbed else DubStatus.Subbed
+                status to toEpisodes(readAllEpisodes(sid, detail), season, offset)
+            }
+            // Dub e sub da mesma temporada costumam ter a mesma contagem; usa a maior.
+            if (fetched.isNotEmpty()) offset += fetched.maxOf { it.second.size }
+
+            for ((status, episodes) in fetched) {
+                val target = if (status == DubStatus.Dubbed) dubbed else subbed
+                for (episode in episodes) target.putIfAbsent(episode.data, episode)
+            }
+        }
+
+        fun sorted(values: Collection<Episode>) =
+            values.sortedWith(compareBy<Episode>({ it.season ?: 0 }, { it.episode ?: 0 }))
+
+        return mapOf(
+            DubStatus.Dubbed to sorted(dubbed.values),
+            DubStatus.Subbed to sorted(subbed.values),
+        )
     }
 
-    private fun toEpisodes(items: List<EpisodeItem>, season: Int?): List<Episode> {
+    private fun toEpisodes(items: List<EpisodeItem>, season: Int?, offset: Int = 0): List<Episode> {
         val formats = DATE_PATTERNS.map { pattern ->
             SimpleDateFormat(pattern, Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
         }
@@ -191,7 +220,8 @@ class AnimesFHD : MainAPI() {
                     numberText?.let { "Episódio $it" },
                     ep.title?.trim()?.takeIf { it.isNotEmpty() && it != "Episódio $numberText" },
                 ).joinToString(" - ").ifEmpty { null }
-                episode = whole
+                // Número local continua no nome; o campo episode recebe o offset da temporada.
+                episode = whole?.plus(offset)
                 this.season = season
                 posterUrl = ep.thumbnail
                 description = ep.description
