@@ -20,7 +20,7 @@
 [![Tamanho do Repo](https://img.shields.io/github/repo-size/RamonMods/CloudBrasil?style=for-the-badge&logo=github&color=FF9800&label=Tamanho)](https://github.com/RamonMods/CloudBrasil)
 [![Stars](https://img.shields.io/github/stars/RamonMods/CloudBrasil?style=for-the-badge&color=FFD700&logo=github&label=Stars)](https://github.com/RamonMods/CloudBrasil/stargazers)
 [![Forks](https://img.shields.io/github/forks/RamonMods/CloudBrasil?style=for-the-badge&color=orange&logo=github&label=Forks)](https://github.com/RamonMods/CloudBrasil/network/members)
-[![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Licenca GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 <br>
 
@@ -47,7 +47,7 @@ Os plugins **somente indexam** links públicos de terceiros. Todo conteúdo vem 
 
 # 📜 Licença
 
-[![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Licenca GPL-3.0](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 Licença **GPL-3.0** — código livre para usar, modificar e distribuir.  
 Só mantenha os créditos e a mesma licença nos derivados.
@@ -60,7 +60,7 @@ Projeto open source mantido por **RamonMods**.
 
 Repositórios de referência:  
 - [![CloudBrasil](https://img.shields.io/badge/CloudBrasil-Repositório-FF6B6B?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudBrasil)  
-- [![CloudStream Official](https://img.shields.io/badge/CloudStream_Official-GitHub-7289DA?style=for-the-badge&logo=github)](https://github.com/recloudstream/cloudstream) 
+- [![CloudStream Official](https://img.shields.io/badge/CloudStream_Oficial-GitHub-7289DA?style=for-the-badge&logo=github)](https://github.com/recloudstream/cloudstream) 
 - [![Documentação CloudStream](https://img.shields.io/badge/📚_Documentação-4CAF50?style=for-the-badge&logo=readthedocs)](https://recloudstream.github.io/csdocs/)
 
 <br>
