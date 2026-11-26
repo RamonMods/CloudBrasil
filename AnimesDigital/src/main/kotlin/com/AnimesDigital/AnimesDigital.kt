@@ -121,7 +121,7 @@ class AnimesDigital : MainAPI() {
             selectFirst(".thumb img[src], img[src]")?.attr("src")
                 ?.takeIf { it.isNotBlank() }?.let(::absoluteUrl)
 
-        private fun Element.asSearchResponse(): SearchResponse? {
+        private fun Element.asSearchResponse(api: MainAPI): SearchResponse? {
             val link = selectFirst("a[href*='/anime/a/'], a[href*='/anime/b/'], a[href*='/video/a/']")
                 ?: return null
             val href = link.attr("href").takeIf { it.isNotBlank() } ?: return null
@@ -131,7 +131,7 @@ class AnimesDigital : MainAPI() {
             val number = selectFirst(".title .number")?.text()?.trim()
             val title = if (!number.isNullOrBlank() && !name.contains(number)) "$name $number" else name
 
-            return this@AnimesDigital.newAnimeSearchResponse(title, url, TvType.Anime) {
+            return api.newAnimeSearchResponse(title, url, TvType.Anime) {
                 this.posterUrl = cardImage()
             }
         }
@@ -155,7 +155,7 @@ class AnimesDigital : MainAPI() {
         val items = try {
             app.get(url, headers = headers, timeout = 30).document
                 .select(selector)
-                .mapNotNull { it.asSearchResponse() }
+                .mapNotNull { it.asSearchResponse(this) }
                 .distinctBy { it.url }
         } catch (e: Exception) {
             emptyList()
@@ -178,7 +178,7 @@ class AnimesDigital : MainAPI() {
             } catch (e: Exception) {
                 break
             }
-            doc.select(".itemA").mapNotNull { it.asSearchResponse() }.forEach { results.add(it) }
+            doc.select(".itemA").mapNotNull { it.asSearchResponse(this) }.forEach { results.add(it) }
             nextUrl = doc.selectFirst(".content-pagination li.next a[href]")
                 ?.attr("href")?.takeIf { it.isNotBlank() && it != "#" }
                 ?.let(::absoluteUrl)
