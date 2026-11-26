@@ -49,6 +49,7 @@ O CloudStream agrupa episódios por `Episode.season` — não existe `addSeason`
 - `settings.gradle.kts` — inclui automaticamente toda pasta com `build.gradle.kts`.
 - `.github/workflows/build.yml` — compila e publica `builds/*.cs3`, `plugins.json` e `repo.json`.
 - `builds/` — artefatos gerados pelo CI (não editar à mão).
+- Repo do app/ecossistema: `https://github.com/RamonMods/CloudStream` (mapa do ecossistema, arquitetura e documentação em PT-BR).
 
 ## Licença
 

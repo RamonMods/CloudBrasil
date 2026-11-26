@@ -37,6 +37,16 @@
 
 ---
 
+### App CloudStream (nosso repositório)
+
+Mapa do ecossistema, arquitetura e documentação em PT-BR: [RamonMods/CloudStream](https://github.com/RamonMods/CloudStream).
+
+[![App CloudStream](https://img.shields.io/badge/App_CloudStream-Nosso_Repositório-9C27B0?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudStream)
+
+Baixe o APK oficial em https://github.com/recloudstream/cloudstream/releases.
+
+---
+
 # ⚠️ Aviso Legal
 
 Este projeto **não promove, hospeda, transmite, armazena ou distribui** qualquer mídia protegida por direitos autorais (filmes, séries, animes etc.).
