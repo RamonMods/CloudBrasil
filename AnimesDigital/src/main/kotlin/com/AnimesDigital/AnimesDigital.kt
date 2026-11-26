@@ -4,6 +4,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -130,7 +131,7 @@ class AnimesDigital : MainAPI() {
             val number = selectFirst(".title .number")?.text()?.trim()
             val title = if (!number.isNullOrBlank() && !name.contains(number)) "$name $number" else name
 
-            return newAnimeSearchResponse(title, url, TvType.Anime) {
+            return this@AnimesDigital.newAnimeSearchResponse(title, url, TvType.Anime) {
                 this.posterUrl = cardImage()
             }
         }
