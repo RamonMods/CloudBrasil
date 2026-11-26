@@ -433,7 +433,7 @@ class DattebayoBR : MainAPI() {
         }
 
         // 4. Deduplica por URL (a paginacao concatena sem dedupe) e ordena por temporada/episodio
-        val uniqueEpisodes = episodes.distinctBy { it.url }
+        val uniqueEpisodes = episodes.distinctBy { it.data }
         val sortedEpisodes = uniqueEpisodes.sortedWith(
             compareBy({ it.season ?: 1 }, { it.episode ?: 0 })
         )

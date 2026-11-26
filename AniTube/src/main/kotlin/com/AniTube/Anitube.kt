@@ -376,7 +376,7 @@ class AniTube : MainAPI() {
         }
 
         // Remove duplicados por URL e ordena por temporada/episodio
-        val uniqueEpisodes = allEpisodes.distinctBy { it.url }
+        val uniqueEpisodes = allEpisodes.distinctBy { it.data }
         val sortedEpisodes = uniqueEpisodes.sortedWith(
             compareBy({ it.season ?: 1 }, { it.episode ?: 0 })
         )
