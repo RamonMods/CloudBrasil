@@ -1,6 +1,6 @@
 <div align="center">
 
-# Liet Repo
+# CloudBrasil
 ## 🇧🇷 Extensão brasileira para CloudStream
 
 **Deixe uma ⭐ se esse repo te ajudou**  
@@ -9,7 +9,9 @@
 <br>
 
 ### Por favor junte-se ao Discord para saber mais e reportar bugs
-[![Junte-se ao Liet Repo no Discord!](https://invidget.switchblade.xyz/q3Xkfhupnz?language=pt)](https://discord.gg/q3Xkfhupnz)
+![CloudBrasil no Discord](https://img.shields.io/badge/Discord-Em%20breve-5865F2?style=for-the-badge&logo=discord&logoColor=white)
+
+*Servidor do Discord em criação — o convite será publicado aqui.*
 
 <br>
 
@@ -18,7 +20,7 @@
 [![Tamanho do Repo](https://img.shields.io/github/repo-size/RamonMods/CloudBrasil?style=for-the-badge&logo=github&color=FF9800&label=Tamanho)](https://github.com/RamonMods/CloudBrasil)
 [![Stars](https://img.shields.io/github/stars/RamonMods/CloudBrasil?style=for-the-badge&color=FFD700&logo=github&label=Stars)](https://github.com/RamonMods/CloudBrasil/stargazers)
 [![Forks](https://img.shields.io/github/forks/RamonMods/CloudBrasil?style=for-the-badge&color=orange&logo=github&label=Forks)](https://github.com/RamonMods/CloudBrasil/network/members)
-[![License MIT](https://img.shields.io/badge/License-MIT-8A2BE2?style=for-the-badge&logo=opensourceinitiative)](https://opensource.org/licenses/MIT)
+[![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 <br>
 
@@ -45,19 +47,19 @@ Os plugins **somente indexam** links públicos de terceiros. Todo conteúdo vem 
 
 # 📜 Licença
 
-[![MIT License](https://img.shields.io/badge/License-MIT-8A2BE2?style=for-the-badge&logo=opensourceinitiative)](https://opensource.org/licenses/MIT)
+[![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-8A2BE2?style=for-the-badge&logo=gnu)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-Licença **MIT** — código livre para usar, modificar e distribuir.  
-Só mantenha os créditos!
+Licença **GPL-3.0** — código livre para usar, modificar e distribuir.  
+Só mantenha os créditos e a mesma licença nos derivados.
 
 ---
 
 # Relacionados
 
-Projeto inspirado no saimuelrepo.
+Projeto open source mantido por **RamonMods**.
 
 Repositórios de referência:  
-- [![saimuelrepo](https://img.shields.io/badge/saimuelrepo-Repositório-FF6B6B?style=for-the-badge&logo=github)](https://github.com/saimuelbr/saimuelrepo)  
+- [![CloudBrasil](https://img.shields.io/badge/CloudBrasil-Repositório-FF6B6B?style=for-the-badge&logo=github)](https://github.com/RamonMods/CloudBrasil)  
 - [![CloudStream Official](https://img.shields.io/badge/CloudStream_Official-GitHub-7289DA?style=for-the-badge&logo=github)](https://github.com/recloudstream/cloudstream) 
 - [![Documentação CloudStream](https://img.shields.io/badge/📚_Documentação-4CAF50?style=for-the-badge&logo=readthedocs)](https://recloudstream.github.io/csdocs/)
 
