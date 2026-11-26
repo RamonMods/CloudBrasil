@@ -1,64 +1,65 @@
 # Mapa do repositório CloudBrasil
 
-Levantamento atualizado em 26/11/2026 (segundo turno). Status dos sites medido com requisição real (UA de navegador).
+Atualizado em 26/11/2026. **CI verde** — 18 plugins publicados em `builds/`.
 
-## Como instalar
+## Instalação
 
 - Shortcode no CloudStream: `CloudBrasil`
-- URL do repositório: `https://raw.githubusercontent.com/RamonMods/CloudBrasil/main/builds/repo.json`
-- Repo do app e do ecossistema (PT-BR): `https://github.com/RamonMods/CloudStream`
+- URL: `https://raw.githubusercontent.com/RamonMods/CloudBrasil/main/builds/repo.json`
+- Repo do app/ecossistema (PT-BR): https://github.com/RamonMods/CloudStream
 
-## Extensões
+## Módulos publicados
 
-| Módulo | Base (mainUrl) | Tipos | v | Site | Estado do código | Pendência |
-|---|---|---|---|---|---|---|
-| **AnimeFire** | `https://animefire.one` | Animes | 2 | 200 | ✅ Reescrito para a API JSON `api.animefire.one`, com `season`/`episode` de todas as temporadas | Validar no app |
-| **AnimesFHD** | `https://animesfhd.net` | Anime, AnimeMovie | 1 | 200 | ✅ Agrega `versions[]` (todas as temporadas/áudios, com offset) | Validar no app |
-| **AniTube** | `https://www.anitube.zip` | Animes | 2 | 200 | ✅ Domínio corrigido, `season` pelo `h1`, dedupe | Validar no app |
-| **CineAgora** | `https://cineagora.net` | Movies, Series, Animes | 1 | **morto** | API de origem (`watch.brstream.cc`) viva | Trocar fonte ou remover* |
-| **DattebayoBR** | `https://www.dattebayo-br.com` | Anime, AsianDrama | 1 | 200 | ✅ Temporada pelo `h1`, offset de "Part 2", dedupe | Validar no app |
-| **Doramogo** | `https://www.doramogo.net` | AsianDrama | 2 | 200 | ✅ Temporadas corretas | Só dedupe defensivo |
-| **EmbedTV** | — | Live | 3 | **morto** | Host fora do ar | Remover* |
-| **Goyabu** | `https://goyabu.io` | Animes | 2 | 403 (Cloudflare) | ✅ `season` pelo título + `usesWebView = true` | Validar no app |
-| **MendigoFlix** | `https://mendigoflix.lol` | Movies, Series, Animes | 3 | 200 (parked) | Domínio estacionado | Substituir/remover* |
-| **PobreFlix** | `https://youcine.quest` | Movies, Series, Animes, AsianDrama | 3 | 200 | ✅ Reescrito para Overflix/YouCine, episódios de todas as temporadas | Validar no app |
-| **ReiDosEmbeds** | `https://reidosembeds.lat` | Live | 1 | **timeout** | Live-only, API mudou de host | Revisar base/player |
-| **StreamFlix** | `https://streamflix.live` | Movies, Series | 1 | **morto** | Código de temporada correto (Xtream) | Remover* |
-| **Xtream (M3U)** | configurável | Live, Movies, Series | 1 | — | ✅ Módulo criado: `player_api.php` + fallback M3U, várias listas via "Clonar site", validade/conexões, filtro dublado/legendado | Testar com lista real |
-| **AnimesOnlineCC** | `https://animesonlinecc.to` | Animes | — | 200 | Em implementação | Novo |
-| **DonghuaNoSekai** | `https://donghuanosekai.com` | Animes, AsianDrama | — | 200 (REST) | Em implementação | Novo |
-| **DoramasOnline** | `https://doramasonline.co` | AsianDrama | — | 200 | Em implementação | Novo |
+| Módulo | Base | Tipos | Site | Temporadas |
+|---|---|---|---|---|
+| AnimeFire | `animefire.one` | Animes | 200 | ✅ via API JSON |
+| AnimesCloud | `animesdrive.cloud` | Animes, AnimeMovie | 200 | ✅ 23 temporadas (One Piece) |
+| AnimesDigital | `animesdigital.org` | Animes, AnimeMovie | 200 | ✅ todas as páginas |
+| AnimesFHD | `animesfhd.net` | Anime, AnimeMovie | 200 | ✅ `versions[]` |
+| AnimesOnlineCC | `animesonlinecc.to` | Animes | 200 | ✅ 8 temporadas (BNHA) |
+| AniTube | `anitube.zip` | Animes | 200 | ✅ regex no título |
+| CineAgora | `cineagora.net` | Movies, Series, Animes | morto | fonte antiga |
+| DattebayoBR | `dattebayo-br.com` | Anime, AsianDrama | 200 | ✅ offset de "Part 2" |
+| DonghuaNoSekai | `donghuanosekai.com` | Animes, AsianDrama | 200 | ✅ labels `S2/S3` |
+| DoramasOnline | `doramasonline.net` | AsianDrama | 200 | ✅ (o `.co` está estacionado) |
+| Doramogo | `doramogo.net` | AsianDrama | 200 | ✅ bloco por temporada |
+| EmbedTV | — | Live | morto | — |
+| Goyabu | `goyabu.io` | Animes | 403 (WebView) | ✅ regex no título |
+| MendigoFlix | `mendigoflix.lol` | Movies, Series, Animes | parked | — |
+| PobreFlix | `youcine.quest` | Movies, Series, Animes, AsianDrama | 200 | ✅ Overflix |
+| ReiDosEmbeds | `reidosembeds.lat` | Live | timeout | — |
+| StreamFlix | `streamflix.live` | Movies, Series | morto | — |
+| **Xtream** | configurável | Live, Movies, Series | — | ✅ `get_series_info` + M3U |
 
-\* Remoção depende de autorização explícita do dono do repositório.
+## Xtream / listas M3U (pedido principal)
 
-## Diagnóstico das temporadas (corrigido)
+- Aceita `get.php?username=...&password=...`, `player_api.php?...` e `user:pass@host:port`.
+- Várias listas: use **Clonar site** no app e troque `mainUrl` por instância.
+- Conta: `getMainPage` mostra status, validade (`exp_date`) e conexões (`user_info`).
+- Filtro: categorias "Dublados", "Legendados" e "Todos" por heurística no nome.
+- Fallback: parser `#EXTINF` de M3U quando `player_api.php` não responde.
 
-O CloudStream agrupa episódios por `Episode.season` — não existe `addSeason`. As causas do bug "só aparece a temporada 1" foram:
+## Correções de temporadas
 
-1. `season` nunca preenchido → **AniTube, DattebayoBR** (corrigido via regex no título).
-2. `season = 1` fixo → **AnimeFire, Goyabu** (corrigido: API/título).
-3. Só a temporada da URL era carregada → **AnimesFHD** (corrigido: `versions[]`).
-4. Parser do formato antigo → **PobreFlix** (corrigido: Overflix).
+O CloudStream agrupa por `Episode.season` (não existe `addSeason`). Corrigimos:
 
-Outro ponto que já corrigimos: `Episode` não tem `.url` (o campo é `.data`), e não se deve usar o construtor `Episode()` direto — use `newEpisode`.
+1. `season` nulo → preenchido por regex/API.
+2. `season = 1` fixo → removido.
+3. Uma temporada só → agregamos `versions[]`, `#seasons .se-c`, paginação e offsets.
+4. `Episode.url` não existe (é `.data`) e o construtor `Episode()` é proibido — tudo usa `newEpisode`.
 
-## Pendências por prioridade
+## Pendências
 
-1. Validar no app as correções de temporadas e o módulo Xtream (CI/build).
-2. Finalizar os 3 novos provedores e subir (AnimesOnlineCC, DonghuaNoSekai, DoramasOnline).
-3. Avaliar `saimuelbr/saimuelrepo` e `franciscoalro/CloudstreamRepo` — fontes de plugins BR, mas **sem licença declarada**: não copiar código, apenas reimplementar do zero.
-4. Limpeza dos módulos com site morto (depende de autorização).
-5. Servidor Discord (link em breve).
+- Validar reprodução no aparelho (principalmente players Blogger do AnimesOnlineCC/AnimesDigital).
+- Remover módulos com site morto (EmbedTV, StreamFlix, MendigoFlix, CineAgora) — depende de autorização.
+- Criar servidor Discord e publicar o convite no README.
 
-## Estrutura do repositório
+## Estrutura
 
-- `build.gradle.kts` — configuração raiz; plugin Gradle do CloudStream fixado em commit válido do JitPack (`81b1d424d236`).
-- `settings.gradle.kts` — inclui automaticamente toda pasta com `build.gradle.kts`.
-- `.github/workflows/build.yml` — compila e publica `builds/*.cs3`, `plugins.json` e `repo.json`.
-- `builds/` — artefatos gerados pelo CI (não editar à mão).
-- `FILA-NOITE.md` — fila de trabalho do modo `loop-noturno`.
-- Repo do app/ecossistema: `https://github.com/RamonMods/CloudStream` (mapa, arquitetura, repositórios e documentação em PT-BR).
+- Cada módulo é uma pasta com `build.gradle.kts` + `src/main/kotlin/com/<Nome>/`.
+- CI: `.github/workflows/build.yml` → `builds/*.cs3`, `plugins.json`, `repo.json`.
+- `mapa/` no repo `RamonMods/CloudStream` tem o levantamento completo do ecossistema.
 
 ## Licença
 
-GPL-3.0 (ver `LICENSE`).
+GPL-3.0. Créditos das extensões de terceiros foram mantidos; código novo é autoral.
