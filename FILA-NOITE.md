@@ -5,6 +5,7 @@
 - [x] Repo `RamonMods/CloudStream` criado como **projeto independente** (`isFork=false`), sem aviso de fork, com todo o código e documentação em PT-BR.
 - [x] Links/servidores do autor original trocados nos dois repos (mantidas só coordenadas de dependência que quebrariam o build).
 - [x] Varredura completa (26/11, turno 3): removidos Discord/APK/docs/site do projeto original do README e das issues, repositório padrão do app agora é o CloudBrasil, workflows mortos que baixavam keystore de terceiros apagados, links em comentários de código limpos. Restaram apenas as coordenadas JitPack `com.github.recloudstream:*`, necessárias para compilar.
+- [x] Identidade própria no app: `applicationId` trocado de `com.lagradost.cloudstream3` para `com.ramonmods.cloudstream` (debug/prerelease com sufixo), updater e taskAffinity ajustados. O pacote interno da API (`com.lagradost.cloudstream3`) foi mantido de propósito: é o contrato que todas as extensões `.cs3` importam — mudar quebraria todos os plugins.
 - [x] CI do app corrigida: **Build APK verde**.
 - [x] CI do CloudBrasil corrigida: **build verde, 18 plugins publicados**.
 - [x] Xtream/M3U (várias listas, validade, filtro dublado/legendado) — commit `5a6b500`/`367d9bf`.
