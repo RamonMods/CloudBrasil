@@ -20,11 +20,53 @@
         "name": "AnimeFire"
     },
     {
-        "iconUrl": "https://animesfhd.net/stremio/logo.png",
-        "fileHash": "sha256-74ba5fd374e57e5d438899ae5afb598bcb5a981850bc6852be2893b59249c92b",
+        "iconUrl": "https://animesdrive.cloud/wp-content/uploads/2026/08/cropped-ico-1-192x192.png",
+        "fileHash": "sha256-c336e74796f9a9e914091f44686bbed05e18476bf1198ce534064d4474a023aa",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 36032,
+        "fileSize": 28693,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "Animes",
+            "AnimeMovie"
+        ],
+        "version": 1,
+        "internalName": "AnimesCloud",
+        "description": "Animes e filmes em portugu\u00eas (PT-BR) do cat\u00e1logo AnimesDrive.",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/AnimesCloud.cs3",
+        "name": "AnimesCloud"
+    },
+    {
+        "iconUrl": "https://animesdigital.org/wp-content/uploads/2025/03/cropped-logo-e1740827992823-192x192.png",
+        "fileHash": "sha256-f0f47e1943baafd310e78ddb6cb925b934132f95c602954512cc2bf4ab055e5d",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 31794,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "Animes",
+            "AnimeMovie"
+        ],
+        "version": 1,
+        "internalName": "AnimesDigital",
+        "description": "AnimesDigital - animes e filmes em portugues, dublados e legendados",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/AnimesDigital.cs3",
+        "name": "AnimesDigital"
+    },
+    {
+        "iconUrl": "https://animesfhd.net/stremio/logo.png",
+        "fileHash": "sha256-2b6f2f5f7b95811b5cb70e7bd83454219cceb512bb861d96bc553c2d31a4baf1",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 38590,
         "status": 1,
         "language": "pt-br",
         "authors": [
@@ -39,6 +81,26 @@
         "description": "Animes legendados e dublados em portugu\u00eas (PT-BR) pelo AnimesFHD.",
         "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/AnimesFHD.cs3",
         "name": "AnimesFHD"
+    },
+    {
+        "iconUrl": "https://animesonlinecc.to/wp-content/uploads/2019/06/favicon.png",
+        "fileHash": "sha256-755113feee88a73154e45db8af00650b043614316a40ee8bcc8fa53ebc01796c",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 23705,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "Animes"
+        ],
+        "version": 1,
+        "internalName": "AnimesOnlineCC",
+        "description": "Animes Online CC - animes em portugues, dublados e legendados",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/AnimesOnlineCC.cs3",
+        "name": "AnimesOnlineCC"
     },
     {
         "iconUrl": "https://www.anitube.news/wp-content/uploads/cropped-Favicon6-192x192.png",
@@ -101,6 +163,47 @@
         "description": "DattebayoBR Animes Online",
         "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/DattebayoBR.cs3",
         "name": "DattebayoBR"
+    },
+    {
+        "iconUrl": "https://cdn.dnskcdn.link/2020/09/cropped-icon_dnsk.png",
+        "fileHash": "sha256-98e6eb70572589aca25c6d60068c30a92c4f165143597a629aa2dbf7786ff720",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 37398,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "Animes",
+            "AsianDrama"
+        ],
+        "version": 1,
+        "internalName": "DonghuaNoSekai",
+        "description": "Donghuas e dramas asi\u00e1ticos legendados em portugu\u00eas",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/DonghuaNoSekai.cs3",
+        "name": "DonghuaNoSekai"
+    },
+    {
+        "iconUrl": "https://doramasonline.net/wp-content/uploads/2022/04/pngegg.png",
+        "fileHash": "sha256-a2d3f7b261f2f52dcbbe26f2ea900f33c76f59a53ebc4a9a40dc2b53c632db79",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 24280,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "AsianDrama"
+        ],
+        "version": 1,
+        "internalName": "DoramasOnline",
+        "description": "Doramas coreanos, chineses e japoneses legendados e dublados em portugu\u00eas",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/DoramasOnline.cs3",
+        "name": "DoramasOnline"
     },
     {
         "iconUrl": "https://www.doramogo.net/assets/doramogo/images/apple-touch-icon.webp?version=200.50.10",
@@ -186,10 +289,10 @@
     },
     {
         "iconUrl": "https://www.image2url.com/r2/default/images/1776018665375-eafe8c65-10f1-490c-9994-2f519402b6e3.png",
-        "fileHash": "sha256-dfbdc94cd64b7cfd384610baccaed8e1b96c4bc91379540792f044f9b9f6063e",
+        "fileHash": "sha256-29f48a6612b2072620d427d6d3bc4125b5bf34a2de59b8befb25fefa3cc24c83",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 43691,
+        "fileSize": 38412,
         "status": 1,
         "language": "pt-br",
         "authors": [
@@ -247,5 +350,27 @@
         "description": "StreamFlix - Filmes e S\u00e9ries Online em Portugu\u00eas | Lan\u00e7amentos e Cl\u00e1ssicos",
         "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/StreamFlix.cs3",
         "name": "StreamFlix"
+    },
+    {
+        "iconUrl": "https://github.com/RamonMods.png",
+        "fileHash": "sha256-5ff2f43f84d593bb055fe04a21837c169bd386c181bae4ddfb581e56dd3438ce",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
+        "fileSize": 48194,
+        "status": 1,
+        "language": "pt-br",
+        "authors": [
+            "RamonMods"
+        ],
+        "tvTypes": [
+            "Live",
+            "Movies",
+            "Series"
+        ],
+        "version": 1,
+        "internalName": "Xtream",
+        "description": "Provedor Xtream IPTV: canais ao vivo, filmes e s\u00e9ries via API/M3U",
+        "url": "https://github.com/RamonMods/CloudBrasil/raw/refs/heads/main/builds/Xtream.cs3",
+        "name": "Xtream"
     }
 ]
