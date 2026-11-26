@@ -175,12 +175,12 @@ class DonghuaNoSekai : MainAPI() {
         }
     }
 
-    private fun listBody(token: String, page: Int, order: String, search: String): String {
+    private fun listBody(token: String, page: Int, order: String, search: String): Map<String, String> {
         val filters = "{\"filter_data\":" +
             "\"filter_letter=0&filter_status=all&filter_animation=all&filter_audio=all&filter_order=$order\"," +
             "\"filter_genre_add\":\"\",\"filter_genre_del\":\"\"}"
 
-        return listOf(
+        return mapOf(
             "action" to "getListFilter",
             "token" to token,
             "pagina" to page.toString(),
@@ -188,7 +188,7 @@ class DonghuaNoSekai : MainAPI() {
             "limit" to "30",
             "type" to "lista",
             "filters" to filters
-        ).joinToString("&") { (key, value) -> "${encode(key)}=${encode(value)}" }
+        )
     }
 
     private suspend fun fetchList(page: Int, order: String, search: String = "0"): ListAjaxResponse? {

@@ -1,5 +1,7 @@
 package com.DoramasOnline
 
+import com.lagradost.cloudstream3.Score
+
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import org.jsoup.Jsoup
@@ -195,7 +197,7 @@ class DoramasOnline : MainAPI() {
                     this.plot = plot
                     this.year = year
                     this.tags = tags
-                    this.score = score
+                    this.score = score?.let { Score.from10(it) }
                 }
             } else {
                 val collected = mutableListOf<Triple<Int, Int, Episode>>()
@@ -259,7 +261,7 @@ class DoramasOnline : MainAPI() {
                     this.plot = plot
                     this.year = year
                     this.tags = tags
-                    this.score = score
+                    this.score = score?.let { Score.from10(it) }
                 }
             }
         } catch (e: Exception) {
