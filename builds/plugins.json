@@ -1,10 +1,10 @@
 [
     {
         "iconUrl": "https://animefire.io/img/icons/favicon-192x192.png",
-        "fileHash": "sha256-f3ba41bdb27387cee96901b6063d4741f9d1ed860d840b5d2ef6abfa2bee0342",
+        "fileHash": "sha256-96e4bf873552ff984ed0cda215688d26de18b81e9b185001cde92c38840d61d0",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 41902,
+        "fileSize": 49228,
         "status": 1,
         "language": "pt-br",
         "authors": [
@@ -42,10 +42,10 @@
     },
     {
         "iconUrl": "https://www.anitube.news/wp-content/uploads/cropped-Favicon6-192x192.png",
-        "fileHash": "sha256-7b340000d3e6f7e2424ffe8bf03f2db0fc3b0cdbe49c3cc74f89c1479e287a9d",
+        "fileHash": "sha256-74638daefc5799c8ed7194759747ad304b34a3813ddb9f562c5abb308a164a71",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 35471,
+        "fileSize": 36629,
         "status": 1,
         "language": "pt-br",
         "authors": [
@@ -84,10 +84,10 @@
     },
     {
         "iconUrl": "https://www.dattebayo-br.com/favicon.png",
-        "fileHash": "sha256-36faadd6b9306fe5a09b7a7a4ac2250457c6ab95321951798d5a60c39e685f8d",
+        "fileHash": "sha256-753a91df49cd55b86db65a4bc5bde02e7b6a09d329203ae622618d215403578c",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 29092,
+        "fileSize": 32008,
         "status": 1,
         "language": "pt-br",
         "authors": [
@@ -144,10 +144,10 @@
     },
     {
         "iconUrl": "https://goyabu.io/wp-content/uploads/2025/12/cropped-goyabu-favicon-192x192.png",
-        "fileHash": "sha256-9602fc37f2f0ee549f141b1baa9a38a2bb6aa9f60a2c52084a39b8ab4aba7139",
+        "fileHash": "sha256-7c75e38aad1c3ed6c28836fd6bca0642e06ca7b0d759995c9eede8eb0661762b",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/RamonMods/CloudBrasil",
-        "fileSize": 32494,
+        "fileSize": 33565,
         "status": 1,
         "language": "pt-br",
         "authors": [
