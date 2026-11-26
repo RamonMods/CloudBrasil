@@ -1,607 +1,262 @@
 package com.AnimeFire
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.utils.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jsoup.nodes.Element
 
+/**
+ * Provider do AnimeFire usando a API JSON pública (api.animefire.one).
+ *
+ * O site virou uma SPA Angular, então o scraping de HTML morreu. Todos os dados
+ * abaixo vêm dos endpoints JSON (validados com curl):
+ *  - busca:    GET /animes/pesquisar?q=<termo>
+ *  - anime:    GET /anime/<animeId>
+ *  - episódio: GET /episode/<episodeId>
+ *  - home:     GET /home (carrosséis) e GET /animes/lancamentos
+ */
 class AnimeFire : MainAPI() {
-    override var mainUrl = "https://animefire.io"
+    override var mainUrl = "https://animefire.one"
     override var name = "AnimeFire"
     override val hasMainPage = true
     override var lang = "pt-br"
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(TvType.Anime, TvType.Movie, TvType.OVA)
-    override val usesWebView = true
+    override val usesWebView = false
 
     companion object {
-        private const val SEARCH_PATH = "/pesquisar"
-        
-        private val loadingMutex = Mutex()
-        
-        private val FIXED_CATEGORIES = listOf(
-            "/em-lancamento" to "Lançamentos",
-            "/top-animes" to "Top Animes",
-            "/lista-de-animes-dublados" to "Animes Dublados",
-            "/lista-de-animes-legendados" to "Animes Legendados"
+        // Base da API JSON (o site em si é SPA e não serve mais HTML útil)
+        private const val API_URL = "https://api.animefire.one"
+
+        // Cache do /home (resposta grande, ~400 KB) para não baixar uma vez por aba
+        private const val HOME_CACHE_MS = 5 * 60 * 1000L
+        private val homeMutex = Mutex()
+        private var cachedHome: ApiHomeResponse? = null
+        private var cachedHomeAt = 0L
+
+        /**
+         * Linhas da home. Cada chave é um carrossel do endpoint /home, exceto
+         * "lancamentos", que usa /animes/lancamentos.
+         *
+         * O carrossel "new-episodes" foi omitido de propósito: os itens dele só
+         * trazem o id do EPISÓDIO (sem o id do anime), então não dá para montar
+         * a URL de load ("/anime/<animeId>/<epId>").
+         */
+        private val HOME_TABS = listOf(
+            "lancamentos" to "Lançamentos",
+            "new-animes" to "Novidades",
+            "new-animes-dubbed" to "Novos Dublados",
+            "most-liked" to "Mais Curtidos",
+            "top-airing" to "Melhores em Lançamento",
+            "top-10" to "Top 10 da Semana",
+            "tag-magic" to "Magia e Feitiçaria",
+            "tag-time-manipulation" to "Viagens no Tempo",
+            "tag-detective" to "Mistérios para Resolver",
+            "tag-post-apocalyptic" to "Pós-Apocalíptico"
         )
-        
-        private val ALL_RANDOM_CATEGORIES = listOf(
-            "/animes-atualizados" to "Atualizados",
-            "/lista-de-filmes-legendados" to "Filmes Legendados",
-            "/lista-de-filmes-dublados" to "Filmes Dublados",
-            "/genero/acao" to "Ação",
-            "/genero/aventura" to "Aventura",
-            "/genero/comedia" to "Comédia",
-            "/genero/drama" to "Drama",
-            "/genero/fantasia" to "Fantasia",
-            "/genero/romance" to "Romance",
-            "/genero/shounen" to "Shounen",
-            "/genero/seinen" to "Seinen",
-            "/genero/esporte" to "Esporte",
-            "/genero/misterio" to "Mistério",
-            "/genero/artes-marciais" to "Artes Marciais",
-            "/genero/demonios" to "Demônios",
-            "/genero/ecchi" to "Ecchi",
-            "/genero/ficcao-cientifica" to "Ficção Científica",
-            "/genero/harem" to "Harém",
-            "/genero/horror" to "Horror",
-            "/genero/magia" to "Magia",
-            "/genero/mecha" to "Mecha",
-            "/genero/militar" to "Militar",
-            "/genero/psicologico" to "Psicológico",
-            "/genero/slice-of-life" to "Slice of Life",
-            "/genero/sobrenatural" to "Sobrenatural",
-            "/genero/superpoder" to "Superpoder",
-            "/genero/vampiros" to "Vampiros",
-            "/genero/vida-escolar" to "Vida Escolar"
-        )
-        
-        private var cachedRandomTabs: List<Pair<String, String>>? = null
-        private var cacheTime: Long = 0
-        private const val CACHE_DURATION = 300000L
-        
-        fun getCombinedTabs(): List<Pair<String, String>> {
-            val currentTime = System.currentTimeMillis()
-            
-            if (cachedRandomTabs != null && (currentTime - cacheTime) < CACHE_DURATION) {
-                return FIXED_CATEGORIES + cachedRandomTabs!!
-            }
-            
-            val randomTabs = ALL_RANDOM_CATEGORIES
-                .shuffled()
-                .take(8)
-                .distinctBy { it.first }
-            
-            cachedRandomTabs = randomTabs
-            cacheTime = currentTime
-            
-            return FIXED_CATEGORIES + randomTabs
-        }
     }
 
     override val mainPage = mainPageOf(
-        *getCombinedTabs().map { (path, name) -> 
-            "$mainUrl$path" to name 
-        }.toTypedArray()
+        *HOME_TABS.toTypedArray()
     )
 
-    private fun extractPoster(element: Element): String? {
-        return try {
-            val metaImage = element.selectFirst("meta[property='og:image']")?.attr("content")
-                ?.takeIf { it.isNotBlank() }
-                ?.let { fixUrl(it) }
-            if (metaImage != null) return metaImage
-            
-            val dataSrc = element.selectFirst("img[data-src]")?.attr("data-src")
-                ?.takeIf { it.isNotBlank() }
-                ?.let { fixUrl(it) }
-            if (dataSrc != null) return dataSrc
-            
-            val srcImage = element.selectFirst("img[src]")?.attr("src")
-                ?.takeIf { it.isNotBlank() }
-                ?.let { fixUrl(it) }
-            if (srcImage != null) return srcImage
-            
-            val style = element.attr("style")
-            if (style.contains("background-image")) {
-                val bgRegex = Regex("""url\(['"]?([^'"()]+)['"]?\)""")
-                val match = bgRegex.find(style)
-                match?.groupValues?.get(1)?.let { bgUrl ->
-                    return fixUrl(bgUrl)
-                }
-            }
-            
-            null
-        } catch (e: Exception) {
-            null
-        }
+    /** Extrai o último segmento da URL (id do anime ou do episódio). */
+    private fun extractId(url: String): String? {
+        return url.substringBefore('?')
+            .substringBefore('#')
+            .trimEnd('/')
+            .substringAfterLast('/')
+            .takeIf { it.isNotBlank() }
     }
 
-    private fun extractDetailPoster(document: org.jsoup.nodes.Document): String? {
-        return try {
-            val metaImage = document.selectFirst("meta[property='og:image']")?.attr("content")
-                ?.takeIf { it.isNotBlank() }
-                ?.let { fixUrl(it) }
-            if (metaImage != null) return metaImage
-            
-            val posterSelectors = listOf(
-                ".sub_animepage_img img",
-                ".poster img", 
-                ".anime-poster img",
-                ".cover img",
-                "img.poster"
-            )
-            
-            for (selector in posterSelectors) {
-                document.selectFirst(selector)?.let { img ->
-                    val src = when {
-                        img.hasAttr("src") -> img.attr("src")
-                        img.hasAttr("data-src") -> img.attr("data-src")
-                        else -> null
-                    }
-                    
-                    src?.takeIf { it.isNotBlank() }?.let { 
-                        return fixUrl(it)
-                    }
-                }
-            }
-            
-            document.selectFirst("img[src*='/animes/'], img[src*='/img/']")
-                ?.attr("src")
-                ?.takeIf { it.isNotBlank() }
-                ?.let { return fixUrl(it) }
-            
-            null
-        } catch (e: Exception) {
-            null
-        }
+    /** Título preferindo BR, depois JP, depois US. */
+    private fun ApiTitles?.bestTitle(): String? {
+        return this?.br?.takeIf { it.isNotBlank() }
+            ?: this?.jp?.takeIf { it.isNotBlank() }
+            ?: this?.us?.takeIf { it.isNotBlank() }
     }
 
-    private fun Element.toSearchResponse(): AnimeSearchResponse? {
-        val href = attr("href") ?: return null
-        if (href.isBlank() || (!href.contains("/animes/") && !href.contains("/filmes/"))) return null
-        
-        val titleElement = selectFirst("h3.animeTitle, .animeTitle, h3, .card-title") ?: return null
-        val rawTitle = titleElement.text().trim()
-        
-        val titleAttr = attr("title")?.trim() ?: ""
-        val combinedTitle = if (titleAttr.isNotBlank() && titleAttr.length > 3) titleAttr else rawTitle
-        
-        if (combinedTitle.isBlank()) return null
-        
-        val scoreResult = extractScoreAdvanced(this)
-        val scoreText = scoreResult.first
-        val score = when {
-            scoreText == null || scoreText == "N/A" -> null
-            else -> scoreText.toFloatOrNull()?.let { Score.from10(it) }
-        }
-        
-        val hasExplicitDub = combinedTitle.contains("dublado", ignoreCase = true)
-        val hasExplicitLeg = combinedTitle.contains("legendado", ignoreCase = true)
-        
-        val finalHasDub: Boolean
-        val finalHasLeg: Boolean
-        
-        when {
-            hasExplicitDub && !hasExplicitLeg -> {
-                finalHasDub = true
-                finalHasLeg = false
-            }
-            !hasExplicitDub && hasExplicitLeg -> {
-                finalHasDub = false
-                finalHasLeg = true
-            }
-            hasExplicitDub && hasExplicitLeg -> {
-                finalHasDub = true
-                finalHasLeg = true
-            }
-            else -> {
-                finalHasDub = false
-                finalHasLeg = true
-            }
-        }
-        
-        val cleanName = extractAnimeName(combinedTitle, selectFirst(".numEp")?.text())
-        val isMovie = href.contains("/filmes/") || combinedTitle.contains("filme", ignoreCase = true)
-        val sitePoster = extractPoster(this)
+    private fun ApiSearchItem.toSearchResponse(): AnimeSearchResponse? {
+        val animeId = id?.takeIf { it.isNotBlank() } ?: return null
+        val title = titles.bestTitle() ?: return null
+        val audio = audio?.lowercase().orEmpty()
 
-        return newAnimeSearchResponse(cleanName, fixUrl(href)) {
-            this.posterUrl = sitePoster
-            this.type = if (isMovie) TvType.Movie else TvType.Anime
-            this.score = score
-            
-            if (finalHasDub || finalHasLeg) {
-                addDubStatus(dubExist = finalHasDub, subExist = finalHasLeg)
+        return newAnimeSearchResponse(title, "$mainUrl/anime/$animeId", TvType.Anime) {
+            this.posterUrl = posterSrc
+            if (audio.isNotBlank()) {
+                addDubStatus(
+                    dubExist = audio.contains("dublado"),
+                    subExist = audio.contains("legendado")
+                )
             }
         }
     }
 
-    private fun extractScoreAdvanced(element: Element): Pair<String?, String?> {
-        val selectors = listOf(
-            ".horaUltimosEps" to "Seletor padrão .horaUltimosEps",
-            ".rating" to "Seletor .rating",
-            ".score" to "Seletor .score",
-            ".numEp + span" to "Próximo ao .numEp",
-            ".episodes + span" to "Próximo a .episodes",
-            ".card-footer span" to "No rodapé do card",
-            "span:contains(★)" to "Span com estrela",
-            "span:contains(/10)" to "Span com /10",
-            "[class*='rating']" to "Classe contém 'rating'",
-            "[class*='score']" to "Classe contém 'score'",
-            "small" to "Tag small",
-            "b" to "Tag bold"
-        )
+    /** Busca no /home com cache em memória. */
+    private suspend fun getHomeCached(): ApiHomeResponse? {
+        val now = System.currentTimeMillis()
+        cachedHome?.let { if (now - cachedHomeAt < HOME_CACHE_MS) return it }
 
-        for ((selector, _) in selectors) {
-            val found = element.selectFirst(selector)?.text()?.trim()
-            if (!found.isNullOrBlank() && isScoreLike(found)) {
-                return found to selector
+        return homeMutex.withLock {
+            val nowInner = System.currentTimeMillis()
+            cachedHome?.let { if (nowInner - cachedHomeAt < HOME_CACHE_MS) return@withLock it }
+
+            val response = app.get("$API_URL/home", timeout = 40)
+                .parsedSafe<ApiHomeResponse>()
+            if (response != null) {
+                cachedHome = response
+                cachedHomeAt = nowInner
             }
-        }
-
-        element.parent()?.let { parent ->
-            for ((selector, _) in selectors) {
-                val found = parent.selectFirst(selector)?.text()?.trim()
-                if (!found.isNullOrBlank() && isScoreLike(found)) {
-                    return found to "parent.$selector"
-                }
-            }
-        }
-
-        val html = element.outerHtml()
-        val scoreRegexes = listOf(
-            Regex("""(\d+\.\d+|\d+)\s*(?:★|/10|pontos)"""),
-            Regex("""class="[^"]*(?:rating|score)[^"]*">([^<]+)""")
-        )
-
-        for (regex in scoreRegexes) {
-            val match = regex.find(html)
-            if (match != null) {
-                val found = match.groupValues[1].trim()
-                if (isScoreLike(found)) {
-                    return found to "regex"
-                }
-            }
-        }
-
-        return null to null
-    }
-
-    private fun isScoreLike(text: String): Boolean {
-        return when {
-            text.equals("N/A", ignoreCase = true) -> true
-            text.matches(Regex("""^\d+(\.\d+)?$""")) -> true
-            text.matches(Regex("""^\d+(\.\d+)?/10$""")) -> true
-            text.contains("★") -> true
-            text.contains("pontos", ignoreCase = true) -> true
-            else -> false
+            response
         }
     }
 
-    private fun extractAnimeName(fullText: String, episodeText: String?): String {
-        var cleanName = fullText
-        
-        episodeText?.let {
-            cleanName = cleanName.replace(it, "").trim()
-        }
-        
-        val patterns = listOf(
-            Regex("(?i)\\(dublado\\)"),
-            Regex("(?i)\\(legendado\\)"),
-            Regex("(?i)todos os episódios"),
-            Regex("\\s*-\\s*$"),
-            Regex("\\(\\d{4}\\)")
-        )
-        
-        patterns.forEach { pattern ->
-            cleanName = cleanName.replace(pattern, "")
-        }
-        
-        return cleanName.trim().replace(Regex("\\s+"), " ")
+    private suspend fun fetchHomeCarousel(key: String): List<SearchResponse> {
+        val carousel = getHomeCached()
+            ?.data?.carousels
+            ?.firstOrNull { it.key == key }
+            ?: return emptyList()
+
+        return carousel.items.orEmpty().mapNotNull { it.toSearchResponse() }
     }
 
-    private suspend fun detectHasNextPage(document: org.jsoup.nodes.Document, currentPageNum: Int): Boolean {
-        return try {
-            val hasElements = document.select("article, .card, .anime-item").isNotEmpty()
-            if (!hasElements) return false
-            
-            val hasPagination = document.select(".pagination, .page-numbers, .paginacao").isNotEmpty()
-            val hasNextLink = document.select("a:contains(Próxima), a:contains(›), a:contains(>), a[href*='/${currentPageNum + 1}']").isNotEmpty()
-            
-            hasElements && (hasPagination || hasNextLink)
-        } catch (e: Exception) {
-            false
-        }
+    private suspend fun fetchLancamentos(): List<SearchResponse> {
+        val response = app.get("$API_URL/animes/lancamentos", timeout = 30)
+            .parsedSafe<ApiLancamentosResponse>()
+
+        return response?.data?.animes.orEmpty().mapNotNull { it.toSearchResponse() }
     }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        return loadingMutex.withLock {
-            try {
-                val isFixedTab = FIXED_CATEGORIES.any { it.second == request.name }
-                val basePath = request.data.removePrefix(mainUrl)
-                val sitePageNumber = page + 1
-                
-                val pageUrl = if (sitePageNumber == 1) {
-                    "$mainUrl$basePath"
-                } else {
-                    "$mainUrl$basePath/$sitePageNumber"
+        return try {
+            // Carrosséis e lançamentos não são paginados pela API.
+            if (page > 0) {
+                newHomePageResponse(request.name, emptyList(), false)
+            } else {
+                val items = when (request.data) {
+                    "lancamentos" -> fetchLancamentos()
+                    else -> fetchHomeCarousel(request.data)
                 }
-                
-                val document = app.get(pageUrl, timeout = 25).document
-                val elements = document.select("""
-                    article a,
-                    .card a,
-                    .anime-item a,
-                    a[href*='/animes/'],
-                    a[href*='/filmes/']
-                """).take(50)
-                
-                val homeItems = mutableListOf<SearchResponse>()
-                
-                elements.forEach { element ->
-                    try {
-                        val item = element.toSearchResponse()
-                        if (item != null) {
-                            homeItems.add(item)
-                        }
-                    } catch (e: Exception) {
-                    }
-                }
-                
-                val hasNextPage = detectHasNextPage(document, sitePageNumber)
-                
                 newHomePageResponse(
                     request.name,
-                    homeItems.distinctBy { it.url },
-                    hasNext = hasNextPage
+                    items.distinctBy { it.url },
+                    false
                 )
-                
-            } catch (e: Exception) {
-                newHomePageResponse(request.name, emptyList(), false)
             }
+        } catch (e: Exception) {
+            newHomePageResponse(request.name, emptyList(), false)
         }
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        if (query.length < 2) return emptyList()
-        
-        val searchUrl = "$mainUrl$SEARCH_PATH/${query.trim().replace(" ", "-").lowercase()}"
-        
+        if (query.isBlank()) return emptyList()
+
         return try {
-            val document = app.get(searchUrl, timeout = 15).document
-            
-            document.select("a[href*='/animes/'], a[href*='/filmes/']")
+            val response = app.get(
+                "$API_URL/animes/pesquisar",
+                params = mapOf("q" to query.trim()),
+                timeout = 25
+            ).parsedSafe<ApiSearchResponse>()
+
+            response?.data.orEmpty()
                 .mapNotNull { it.toSearchResponse() }
                 .distinctBy { it.url }
-                .take(30)
-                
         } catch (e: Exception) {
             emptyList()
         }
     }
 
-    private fun extractTextAfterLabel(document: org.jsoup.nodes.Document, label: String): String? {
-        return document.select("div.animeInfo:contains($label) span.spanAnimeInfo")
-            .firstOrNull()?.text()?.trim()
-    }
-
-    private fun extractYear(text: String?): Int? {
-        if (text.isNullOrBlank()) return null
-        val yearRegex = Regex("""(\d{4})""")
-        val match = yearRegex.find(text)
-        return match?.groupValues?.get(1)?.toIntOrNull()
-    }
-
     override suspend fun load(url: String): LoadResponse {
+        val animeId = extractId(url) ?: return newTvSeriesLoadResponse(
+            "Erro ao carregar",
+            url,
+            TvType.Anime,
+            emptyList()
+        ) {
+            this.plot = "Não foi possível identificar o anime na URL."
+        }
+
         return try {
-            val document = app.get(url, timeout = 35).document
-            
-            val title = document.selectFirst("h1.quicksand400")?.text()?.trim() 
-                ?: document.selectFirst("h1.animeTitle, h1")?.text()?.trim() 
-                ?: "Sem Título"
-            
-            val poster = extractDetailPoster(document)
-            val background = poster
-            
-            val synopsis = document.selectFirst("div.divSinopse span.spanAnimeInfo")
-                ?.text()
-                ?.trim()
-                ?: document.selectFirst("div.divSinopse")
-                ?.text()
-                ?.replace("Sinopse:", "")
-                ?.trim()
-                ?: document.selectFirst("p.sinopse, .description")
-                ?.text()
-                ?.trim()
-                ?: "Sinopse não disponível."
-            
-            val yearText = extractTextAfterLabel(document, "Ano:")
-            val year = extractYear(yearText)
-            
-            val statusElement = document.selectFirst("div.animeInfo:contains(Status do Anime:) span.spanAnimeInfo")
-            val statusText = statusElement?.text()?.trim() ?: "Desconhecido"
-            val showStatus = getStatus(statusText)
-            
-            val genres = mutableListOf<String>()
-            document.select("div.animeInfo a[href*='/genero/']").forEach { element ->
-                element.text().trim().takeIf { it.isNotBlank() }?.let { 
-                    genres.add(it) 
-                }
-            }
-            
-            if (genres.isEmpty()) {
-                document.select("div.animeInfo:contains(Gênero:) span.spanAnimeInfo")
-                    .firstOrNull()
-                    ?.text()
-                    ?.trim()
-                    ?.split(",", ";")
-                    ?.forEach { genre ->
-                        genre.trim().takeIf { it.isNotBlank() }?.let { 
-                            genres.add(it) 
-                        }
-                    }
-            }
-            
-            val audioText = extractTextAfterLabel(document, "Áudio:")
-            val hasDub = audioText?.contains("dublado", ignoreCase = true) ?: false
-            val hasSub = audioText?.contains("legendado", ignoreCase = true) ?: true
-            
-            val studio = extractTextAfterLabel(document, "Estúdios:")
-            
-            val scoreText = document.selectFirst("#anime_score")?.text()?.trim()
-            val score = scoreText?.toFloatOrNull()?.let { Score.from10(it) }
-            
-            val isMovie = url.contains("/filmes/") || 
-                         title.contains("filme", ignoreCase = true)
-            
-            val episodes = extractAllEpisodesFuncional(document, url)
-            
-            val response = newAnimeLoadResponse(
-                title, 
-                url, 
-                if (isMovie) TvType.Movie else TvType.Anime
-            ) {
-                this.posterUrl = poster
-                this.backgroundPosterUrl = background
-                this.year = year
-                this.plot = synopsis
-                this.tags = genres
-                this.score = score
-                
-                studio?.let { 
-                    try {
-                        val studioField = this::class.members.find { it.name == "studio" }
-                        studioField?.call(this, it)
-                    } catch (e: Exception) {
+            val data = app.get("$API_URL/anime/$animeId", timeout = 45)
+                .parsedSafe<ApiAnimeResponse>()
+                ?.data
+                ?: throw IllegalStateException("Resposta vazia da API para o anime $animeId")
+
+            val hero = data.hero
+            val title = hero?.titles.bestTitle() ?: "Sem Título"
+
+            // A própria API já entrega season/number corretos (a numeração reinicia
+            // por temporada). Não normalizamos nada, só deduplicamos e ordenamos.
+            val episodes = data.episodes.orEmpty()
+                .filter { !it.id.isNullOrBlank() }
+                .distinctBy { it.id }
+                .sortedWith(compareBy({ it.season ?: 0 }, { it.number ?: 0 }))
+                .mapNotNull { episode ->
+                    val episodeId = episode.id ?: return@mapNotNull null
+                    newEpisode("$mainUrl/anime/$animeId/$episodeId") {
+                        this.season = episode.season
+                        this.episode = episode.number
+                        this.name = episode.title?.takeIf { it.isNotBlank() }
+                            ?: "Episódio ${episode.number ?: 0}"
+                        this.posterUrl = episode.stillSrc
                     }
                 }
-                
-                if (episodes.isNotEmpty()) {
-                    addEpisodes(DubStatus.Subbed, episodes)
-                }
+
+            newTvSeriesLoadResponse(title, url, TvType.Anime, episodes) {
+                this.posterUrl = hero?.posterSrc
+                this.backgroundPosterUrl = hero?.backdropSrc
+                this.plot = hero?.synopsis
+                this.year = hero?.publishedAt?.take(4)?.toIntOrNull()
+                this.score = Score.from10(hero?.score)
+                this.showStatus = getStatus(hero?.status)
+                hero?.genres?.let { this.tags = it }
             }
-            
-            response
-            
         } catch (e: Exception) {
-            newAnimeLoadResponse("Erro ao carregar", url, TvType.Anime) {
-                this.plot = "Não foi possível carregar esta página."
+            newTvSeriesLoadResponse("Erro ao carregar", url, TvType.Anime, emptyList()) {
+                this.plot = "Não foi possível carregar este anime na API."
             }
         }
     }
 
-    private fun extractAllEpisodesFuncional(document: org.jsoup.nodes.Document, baseUrl: String): List<Episode> {
-        val episodes = mutableListOf<Episode>()
-        val animeTitle = document.selectFirst("h1.quicksand400")?.text()?.trim() ?: ""
-        
-        val selectors = listOf(
-            "div.div_video_list a.lEp.epT",
-            "a.lEp.epT, a.lEp, .divListaEps a, [href*='/video/'], [href*='/episodio/']"
-        )
-        
-        var episodeElements: org.jsoup.select.Elements? = null
-        
-        for (selector in selectors) {
-            val elements = document.select(selector)
-            if (elements.isNotEmpty()) {
-                episodeElements = elements
-                break
-            }
+    /** Maior qualidade disponível. A API manda lista de strings; se vier objeto, usa o melhor valor. */
+    private fun bestQuality(raw: Any?): String? {
+        return when (raw) {
+            is String -> raw.takeIf { it.isNotBlank() }
+            is List<*> -> raw.mapNotNull { qualityLabel(it) }.maxByOrNull { qualityHeight(it) }
+            is Map<*, *> -> raw.mapNotNull { (key, value) ->
+                qualityLabel(value) ?: (key as? String)?.takeIf { it.isNotBlank() }
+            }.maxByOrNull { qualityHeight(it) }
+            else -> null
         }
-        
-        if (episodeElements == null || episodeElements.isEmpty()) {
-            val allLinks = document.select("a[href]")
-            val filteredElements = mutableListOf<org.jsoup.nodes.Element>()
-            
-            allLinks.forEach { element ->
-                val href = element.attr("href")
-                if (href.matches(Regex(".*/animes/[^/]+/\\d+/?$"))) {
-                    filteredElements.add(element)
-                }
-            }
-            
-            episodeElements = org.jsoup.select.Elements(filteredElements)
-        }
-        
-        if (episodeElements == null || episodeElements.isEmpty()) {
-            return emptyList()
-        }
-        
-        episodeElements.forEachIndexed { index, element ->
-            try {
-                val href = element.attr("href")
-                var text = element.text().trim()
-                
-                if (href.isBlank() || text.isBlank()) {
-                    return@forEachIndexed
-                }
-                
-                if (animeTitle.isNotBlank()) {
-                    text = text.replace(animeTitle, "").trim()
-                    text = text.replace(Regex("^\\s*-\\s*"), "").trim()
-                }
-                
-                if (text.length > 30) {
-                    val epMatch = Regex("""Epis[oó]dio\s*\d+""", RegexOption.IGNORE_CASE).find(text)
-                    if (epMatch != null) {
-                        text = epMatch.value
-                    }
-                }
-                
-                val epNum = extractEpisodeNumberFuncional(text, href) ?: (index + 1)
-                if (!text.contains(Regex("""Epis[oó]dio""", RegexOption.IGNORE_CASE))) {
-                    text = "Episódio $epNum"
-                }
-                
-                val episodeNumber = epNum
-                
-                val fixedHref = when {
-                    href.startsWith("//") -> "https:$href"
-                    href.startsWith("/") -> "$mainUrl$href"
-                    !href.startsWith("http") -> "$mainUrl/$href"
-                    else -> href
-                }
-                
-                val episode = newEpisode(fixedHref) {
-                    this.name = text
-                    this.episode = episodeNumber
-                    this.season = 1
-                }
-                
-                episodes.add(episode)
-                
-            } catch (e: Exception) {
-            }
-        }
-        
-        return episodes.sortedBy { it.episode }
     }
 
-    private fun extractEpisodeNumberFuncional(text: String, href: String = ""): Int? {
-        val textPatterns = listOf(
-            Regex("""Epis[oó]dio\s*(\d+)""", RegexOption.IGNORE_CASE),
-            Regex("""Ep\.?\s*(\d+)""", RegexOption.IGNORE_CASE),
-            Regex("""\b(\d+)$""")
-        )
-        
-        for (pattern in textPatterns) {
-            val match = pattern.find(text)
-            if (match != null) {
-                return match.groupValues[1].toIntOrNull()
-            }
+    private fun qualityLabel(value: Any?): String? {
+        return when (value) {
+            is String -> value.takeIf { it.isNotBlank() }
+            is Map<*, *> -> (value["label"] ?: value["quality"] ?: value["name"]) as? String
+            else -> null
         }
-        
-        val urlPattern = Regex("""/animes/[^/]+/(\d+)$""")
-        val urlMatch = urlPattern.find(href)
-        if (urlMatch != null) {
-            return urlMatch.groupValues[1].toIntOrNull()
+    }
+
+    private fun qualityHeight(label: String): Int {
+        return Regex("""(\d{3,4})p""", RegexOption.IGNORE_CASE)
+            .find(label)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    }
+
+    /**
+     * Tipo do link. A API serve HLS até em URLs terminadas em .jpg (o
+     * content-type validado foi application/vnd.apple.mpegurl), por isso o
+     * ".jpg" também é tratado como M3U8.
+     */
+    private fun linkType(url: String): ExtractorLinkType {
+        val path = url.substringBefore('?').substringBefore('#').lowercase()
+        return if (path.endsWith(".m3u8") || path.endsWith(".jpg")) {
+            ExtractorLinkType.M3U8
+        } else {
+            ExtractorLinkType.VIDEO
         }
-        
-        return null
     }
 
     override suspend fun loadLinks(
@@ -611,9 +266,135 @@ class AnimeFire : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         return try {
-            AnimeFireVideoExtractor.extractVideoLinks(data, mainUrl, name, callback)
+            val episodeId = extractId(data) ?: return false
+            val streams = app.get("$API_URL/episode/$episodeId", timeout = 30)
+                .parsedSafe<ApiEpisodeResponse>()
+                ?.data?.streams
+                .orEmpty()
+
+            var found = false
+            streams.forEach { stream ->
+                val streamUrl = stream.url?.takeIf { it.isNotBlank() } ?: return@forEach
+                val quality = bestQuality(stream.qualities)
+                val audioLabel = stream.audio
+                    ?.takeIf { it.isNotBlank() }
+                    ?.lowercase()
+                    ?.replaceFirstChar { it.uppercase() }
+
+                val linkName = listOfNotNull("AnimeFire", audioLabel, quality).joinToString(" ")
+
+                callback.invoke(
+                    newExtractorLink(
+                        source = name,
+                        name = linkName,
+                        url = streamUrl
+                    ) {
+                        this.type = linkType(streamUrl)
+                        this.referer = "$mainUrl/"
+                    }
+                )
+                found = true
+            }
+            found
         } catch (e: Exception) {
             false
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Modelos da API JSON (campos conferidos por curl antes de escrever o código)
+// ---------------------------------------------------------------------------
+
+private data class ApiTitles(
+    @JsonProperty("BR") val br: String? = null,
+    @JsonProperty("JP") val jp: String? = null,
+    @JsonProperty("US") val us: String? = null
+)
+
+private data class ApiSearchResponse(
+    @JsonProperty("data") val data: List<ApiSearchItem>? = null
+)
+
+private data class ApiSearchItem(
+    @JsonProperty("id") val id: String? = null,
+    @JsonProperty("titles") val titles: ApiTitles? = null,
+    @JsonProperty("audio") val audio: String? = null,
+    @JsonProperty("poster_src") val posterSrc: String? = null
+)
+
+private data class ApiAnimeResponse(
+    @JsonProperty("data") val data: ApiAnimeData? = null
+)
+
+private data class ApiAnimeData(
+    @JsonProperty("hero") val hero: ApiHero? = null,
+    @JsonProperty("seasons") val seasons: List<ApiSeason>? = null,
+    @JsonProperty("episodes") val episodes: List<ApiEpisode>? = null
+)
+
+private data class ApiHero(
+    @JsonProperty("titles") val titles: ApiTitles? = null,
+    @JsonProperty("synopsis") val synopsis: String? = null,
+    @JsonProperty("poster_src") val posterSrc: String? = null,
+    @JsonProperty("backdrop_src") val backdropSrc: String? = null,
+    @JsonProperty("genres") val genres: List<String>? = null,
+    @JsonProperty("score") val score: Double? = null,
+    @JsonProperty("status") val status: String? = null,
+    @JsonProperty("published_at") val publishedAt: String? = null,
+    @JsonProperty("audio") val audio: String? = null
+)
+
+private data class ApiSeason(
+    @JsonProperty("title") val title: String? = null,
+    @JsonProperty("number") val number: Int? = null,
+    @JsonProperty("first_episode_number") val firstEpisodeNumber: Int? = null
+)
+
+private data class ApiEpisode(
+    @JsonProperty("id") val id: String? = null,
+    @JsonProperty("season") val season: Int? = null,
+    @JsonProperty("number") val number: Int? = null,
+    @JsonProperty("title") val title: String? = null,
+    @JsonProperty("still_src") val stillSrc: String? = null,
+    @JsonProperty("audio") val audio: String? = null
+)
+
+private data class ApiEpisodeResponse(
+    @JsonProperty("data") val data: ApiEpisodeData? = null
+)
+
+private data class ApiEpisodeData(
+    @JsonProperty("season") val season: Int? = null,
+    @JsonProperty("number") val number: Int? = null,
+    @JsonProperty("streams") val streams: List<ApiStream>? = null
+)
+
+private data class ApiStream(
+    @JsonProperty("audio") val audio: String? = null,
+    @JsonProperty("url") val url: String? = null,
+    // Lista de strings na API atual; mantido como Any? para aceitar objeto também.
+    @JsonProperty("qualities") val qualities: Any? = null
+)
+
+private data class ApiHomeResponse(
+    @JsonProperty("data") val data: ApiHomeData? = null
+)
+
+private data class ApiHomeData(
+    @JsonProperty("carousels") val carousels: List<ApiCarousel>? = null
+)
+
+private data class ApiCarousel(
+    @JsonProperty("key") val key: String? = null,
+    @JsonProperty("title") val title: String? = null,
+    @JsonProperty("items") val items: List<ApiSearchItem>? = null
+)
+
+private data class ApiLancamentosResponse(
+    @JsonProperty("data") val data: ApiLancamentosData? = null
+)
+
+private data class ApiLancamentosData(
+    @JsonProperty("animes") val animes: List<ApiSearchItem>? = null
+)
