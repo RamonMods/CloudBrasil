@@ -13,6 +13,7 @@ import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.SeasonData
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newLiveSearchResponse
 import com.lagradost.cloudstream3.newLiveStreamLoadResponse
@@ -245,7 +246,7 @@ class Xtream : MainAPI() {
         }
     }
 
-    private suspend fun <T> apiJson(action: String, vararg params: Pair<String, String>): T? {
+    private inline suspend fun <reified T> apiJson(action: String, vararg params: Pair<String, String>): T? {
         val body = api(action, *params) ?: return null
         if (body.isBlank() || body.trimStart().startsWith("<")) return null
         return try {
@@ -543,16 +544,16 @@ class Xtream : MainAPI() {
                     }
 
                     // Percorre TODAS as temporadas, não só a primeira.
-                    for (season in detail?.seasons.orEmpty()) {
-                        val seasonNumber = season.number ?: continue
-                        val seasonKey = season.number.toString()
+                    for (seasonEntry in detail?.seasons.orEmpty()) {
+                        val seasonNumber = seasonEntry.number ?: continue
+                        val seasonKey = seasonEntry.number.toString()
                         val seasonEpisodes = detail?.episodes?.get(seasonKey)
                             ?: detail?.episodes?.get("season_$seasonNumber")
                             ?: detail?.episodes?.entries
                                 ?.firstOrNull { it.key.trim().toIntOrNull() == seasonNumber }?.value
                             ?: continue
 
-                        val seasonCover = season.cover
+                        val seasonCover = seasonEntry.cover
                         for (episode in seasonEpisodes) {
                             val episodeId = episode.id ?: continue
                             val episodeNumber = episode.episodeNum
